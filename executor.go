@@ -114,8 +114,11 @@ func Execute(test *AtomicTest, runSpec *RunSpec) (*AtomicTest, error, TestStatus
 			if IsUnsupportedExecutor(test.Executor.Name) {
 				return nil, fmt.Errorf("executor %s is not supported", test.Executor.Name), StatusInvalidArguments
 			}
+			test.StartTime = time.Now().UnixNano()
 
 			results, err := executeStage(stage, test.Executor.Command, test.Executor.Name, test.BaseDir, args , env , tid, test.Name, runSpec)
+
+			test.EndTime = time.Now().UnixNano()
 
 			errstr := ""
 			if err != nil {

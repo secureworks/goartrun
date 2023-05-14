@@ -27,6 +27,7 @@ type AtomicTest struct {
 	Executor     *AtomicExecutor `yaml:"executor"`
 
 	// from here down are not part of schema, used for state
+	// TODO: define wrapper extended class instead
 
 	BaseDir string `yaml:"-"`
 	TempDir string `yaml:"tempdir"`
@@ -34,6 +35,8 @@ type AtomicTest struct {
 	Status            int      `yaml:"test_status,omitempty"`
 	IsCleanedUp       bool     `yaml:"is_cleaned_up,omitempty"`
 	ArgsUsed          map[string]string     `yaml:"args_used,omitempty"`
+	StartTime         int64
+	EndTime           int64
 }
 
 type InputArgument struct {
