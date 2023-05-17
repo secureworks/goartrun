@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"strings"
 	"time"
+	
 
 	"gopkg.in/yaml.v3"
 )
@@ -343,6 +344,10 @@ func executeStage(stage, cmds, executorName, base string, args map[string]string
 		results, err = executeShell("bash",command, env, stage, technique, testName, runSpec)
 	case "sh":
 		results, err = executeShell("sh",command, env, stage, technique, testName, runSpec)
+	case "command_prompt":
+		results, err = executeCMD("CMD",command, env, stage, technique, testName, runSpec)
+	case "powershell":
+		results, err = executePS("POWERSHELL",command, env, stage, technique, testName, runSpec)
 	default:
 		err = fmt.Errorf("unknown executor: " + executorName)
 	}
@@ -396,6 +401,7 @@ func executeShell(shellName string, command string, env []string, stage string, 
 	 Printf("\nExecuting executor=%s command=[%s]\n", shellName, command)
 
 	f, err := os.Create(runSpec.TempDir + "/goart-" + technique + "-" + stage + "." + shellName)
+
 	if err != nil {
 		return "", fmt.Errorf("creating temporary file: %w", err)
 	}
@@ -420,6 +426,8 @@ func executeShell(shellName string, command string, env []string, stage string, 
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, shellName, f.Name())
+
+
 	cmd.Env = append(os.Environ(), env...)
 
 	output, err := cmd.CombinedOutput()
@@ -442,3 +450,111 @@ func executeShell(shellName string, command string, env []string, stage string, 
 
 	return string(output), nil
 }
+
+func executeCMD(shellName string, command string, env []string, stage string, technique string, testName string, runSpec *RunSpec) (string, error) {
+	Printf("\nExecuting executor=%s command=[%s]\n", shellName, command)
+
+	f, err := os.Create(runSpec.TempDir + "\\goart-" + technique + "-" + stage + ".bat")
+
+	if err != nil {
+		return "", fmt.Errorf("creating temporary file: %w", err)
+	}
+
+	if _, err := f.Write([]byte(command)); err != nil {
+		f.Close()
+
+		return "", fmt.Errorf("writing command to file: %w", err)
+	}
+
+	if err := f.Close(); err != nil {
+		return "", fmt.Errorf("closing %s script: %w", shellName, err)
+	}
+
+	// guard against hanging tests - kill after a timeout
+
+	timeoutSec := 30*time.Second
+	if stage != "test" {
+		timeoutSec = 15*time.Second
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), timeoutSec)
+	defer cancel()
+	
+	cmd := exec.CommandContext(ctx, shellName, "/c", f.Name())
+
+	cmd.Env = append(os.Environ(), env...)
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		if context.DeadlineExceeded == ctx.Err() {
+			return string(output), fmt.Errorf("TIMED OUT: script %w", err)
+		}
+		return string(output), fmt.Errorf("executing %s script: %w", shellName, err)
+	}
+/*
+	err = ctx.Err()
+	if err != nil {
+
+		if context.DeadlineExceeded == err {
+			return string(output), fmt.Errorf("TIMED OUT: script %w", err)
+		} else {
+			return string(output), fmt.Errorf("ERROR: script %w", err)
+		}
+	}*/
+
+	return string(output), nil
+}
+
+func executePS(shellName string, command string, env []string, stage string, technique string, testName string, runSpec *RunSpec) (string, error) {
+	 Printf("\nExecuting executor=%s command=[%s]\n", shellName, command)
+
+	f, err := os.Create(runSpec.TempDir + "\\goart-" + technique + "-" + stage + ".ps1")
+	
+	if err != nil {
+		return "", fmt.Errorf("creating temporary file: %w", err)
+	}
+
+	if _, err := f.Write([]byte(command)); err != nil {
+		f.Close()
+
+		return "", fmt.Errorf("writing command to file: %w", err)
+	}
+
+	if err := f.Close(); err != nil {
+		return "", fmt.Errorf("closing %s script: %w", shellName, err)
+	}
+
+	// guard against hanging tests - kill after a timeout
+
+	timeoutSec := 30*time.Second
+	if stage != "test" {
+		timeoutSec = 15*time.Second
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), timeoutSec)
+	defer cancel()
+	
+	cmd := exec.CommandContext(ctx, shellName, "-NoProfile", f.Name())
+
+	cmd.Env = append(os.Environ(), env...)
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		if context.DeadlineExceeded == ctx.Err() {
+			return string(output), fmt.Errorf("TIMED OUT: script %w", err)
+		}
+		return string(output), fmt.Errorf("executing %s script: %w", shellName, err)
+	}
+/*
+	err = ctx.Err()
+	if err != nil {
+
+		if context.DeadlineExceeded == err {
+			return string(output), fmt.Errorf("TIMED OUT: script %w", err)
+		} else {
+			return string(output), fmt.Errorf("ERROR: script %w", err)
+		}
+	}*/
+
+	return string(output), nil
+}
+
+

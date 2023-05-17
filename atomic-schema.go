@@ -3,7 +3,7 @@ package main
 // See https://github.com/redcanaryco/atomic-red-team/blob/master/atomic_red_team/atomic_test_template.yaml
 // and https://github.com/redcanaryco/atomic-red-team/blob/master/atomic_red_team/spec.yaml
 
-var SupportedExecutors = []string{"bash", "sh"}
+var SupportedExecutors = []string{"bash", "sh", "command_prompt", "powershell"}
 
 type Atomic struct {
 	AttackTechnique string       `yaml:"attack_technique"`
