@@ -427,7 +427,6 @@ func executeShell(shellName string, command string, env []string, stage string, 
 
 	cmd := exec.CommandContext(ctx, shellName, f.Name())
 
-
 	cmd.Env = append(os.Environ(), env...)
 
 	output, err := cmd.CombinedOutput()
@@ -490,16 +489,6 @@ func executeCMD(shellName string, command string, env []string, stage string, te
 		}
 		return string(output), fmt.Errorf("executing %s script: %w", shellName, err)
 	}
-/*
-	err = ctx.Err()
-	if err != nil {
-
-		if context.DeadlineExceeded == err {
-			return string(output), fmt.Errorf("TIMED OUT: script %w", err)
-		} else {
-			return string(output), fmt.Errorf("ERROR: script %w", err)
-		}
-	}*/
 
 	return string(output), nil
 }
@@ -543,16 +532,6 @@ func executePS(shellName string, command string, env []string, stage string, tec
 		}
 		return string(output), fmt.Errorf("executing %s script: %w", shellName, err)
 	}
-/*
-	err = ctx.Err()
-	if err != nil {
-
-		if context.DeadlineExceeded == err {
-			return string(output), fmt.Errorf("TIMED OUT: script %w", err)
-		} else {
-			return string(output), fmt.Errorf("ERROR: script %w", err)
-		}
-	}*/
 
 	return string(output), nil
 }
