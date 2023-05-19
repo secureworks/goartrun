@@ -5,6 +5,8 @@ github.com/russross/blackfriday/v2 v2.1.0 h1:JIOH55/0cWyOuilr9/qlrm0BSXldqnqwMsf
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
 github.com/secureworks/atomic-harness v0.0.2 h1:m1oi2JHqPESUMrcs8q2HfjUfF4MZPFM7usuqcebw2Io=
 github.com/secureworks/atomic-harness v0.0.2/go.mod h1:OFQb+PBwzMqh+jzg6238NAdL2omYFsy7uR9rjajvtMA=
+github.com/secureworks/atomic-harness v0.0.3 h1:/9hLNF5duKSrqweT2/ai0J7IbOrlbl8RsnhLtfm9biU=
+github.com/secureworks/atomic-harness v0.0.3/go.mod h1:OFQb+PBwzMqh+jzg6238NAdL2omYFsy7uR9rjajvtMA=
 github.com/urfave/cli/v2 v2.23.7 h1:YHDQ46s3VghFHFf1DdF+Sh7H4RqhcM+t0TmZRJx4oJY=
 github.com/urfave/cli/v2 v2.23.7/go.mod h1:GHupkWPMM0M/sj1a2b4wUrWBPzazNrIjouW6fmdJLxc=
 github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 h1:bAn7/zixMGCfxrRTfdpNzjtPYqr8smhKouy9mxVdGPU=
