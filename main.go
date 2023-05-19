@@ -11,6 +11,8 @@ import (
 	"runtime"
 	"strings"
 
+	types "github.com/secureworks/atomic-harness/pkg/types"
+
 	"gopkg.in/yaml.v3"
 )
 
@@ -41,7 +43,7 @@ func init() {
 }
 
 
-func LoadRunSpec(path string, runSpec *RunSpec) error {
+func LoadRunSpec(path string, runSpec *types.RunSpec) error {
 	var err error
 	data := []byte{}
 
@@ -60,7 +62,7 @@ func LoadRunSpec(path string, runSpec *RunSpec) error {
 	return nil
 }
 
-func FillRunSpecFromFlags(runSpec *RunSpec) {
+func FillRunSpecFromFlags(runSpec *types.RunSpec) {
 	runSpec.Technique = flagTechniqueId
 	runSpec.TestName = flagTestName
 	runSpec.TestIndex = flagTestIndex
@@ -80,7 +82,7 @@ func FillRunSpecFromFlags(runSpec *RunSpec) {
 
 func main() {
 	flag.Parse()
-	runSpec := &RunSpec{}
+	runSpec := &types.RunSpec{}
 	var err error
 
 	if flagRunSpecPath != "" {
@@ -94,14 +96,14 @@ func main() {
 	atomicTest, err := getTest(runSpec.Technique, runSpec.TestName, runSpec.TestIndex, runSpec)
 	if err != nil {
 		fmt.Println("Unable to find AtomicTest for ", runSpec)
-		os.Exit(int(StatusRunnerFailure))
+		os.Exit(int(types.StatusRunnerFailure))
 	}
 
 	if runSpec.TempDir == "" {
 		runSpec.TempDir, err = os.MkdirTemp("", "goart-")
 		if err != nil {
 			fmt.Println("Error making temp dir", err)
-			os.Exit(int(StatusRunnerFailure))
+			os.Exit(int(types.StatusRunnerFailure))
 		}
 		os.Chmod(runSpec.TempDir, 0777)
 	} else {
@@ -109,7 +111,7 @@ func main() {
 		err = os.MkdirAll(runSpec.TempDir,0777)
 		if err != nil {
 			fmt.Println("Error making temp dir", runSpec.TempDir, err)
-			os.Exit(int(StatusRunnerFailure))
+			os.Exit(int(types.StatusRunnerFailure))
 		}
 	}
 	defer os.RemoveAll(runSpec.TempDir)
@@ -118,7 +120,7 @@ func main() {
 		err = os.MkdirAll(runSpec.ResultsDir,0777)
 		if err != nil {
 			fmt.Println("Error making results dir", runSpec.ResultsDir, err)
-			os.Exit(int(StatusRunnerFailure))
+			os.Exit(int(types.StatusRunnerFailure))
 		}
 	}
 
@@ -154,7 +156,7 @@ func main() {
 		}
 	default:
 		fmt.Println("unknown results format provided", ext)
-		os.Exit(int(StatusInvalidArguments))
+		os.Exit(int(types.StatusInvalidArguments))
 	}
 
 	if len(plan) > 0 {
