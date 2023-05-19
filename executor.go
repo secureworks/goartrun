@@ -8,13 +8,14 @@ import (
 	"runtime"
 	"strings"
 	"time"
-	
+
+	types "github.com/secureworks/atomic-harness/pkg/types"
 
 	"gopkg.in/yaml.v3"
 )
 
 
-func Execute(test *AtomicTest, runSpec *RunSpec) (*AtomicTest, error, TestStatus) {
+func Execute(test *AtomicTest, runSpec *types.RunSpec) (*AtomicTest, error, types.TestStatus) {
 	tid := runSpec.Technique
 	env := []string{} // TODO
 
@@ -47,14 +48,14 @@ func Execute(test *AtomicTest, runSpec *RunSpec) (*AtomicTest, error, TestStatus
 
 	args, err := checkArgsAndGetDefaults(test, runSpec)
 	if err != nil {
-		return nil, err, StatusInvalidArguments
+		return nil, err, types.StatusInvalidArguments
 	}
 
 	// overwrite with actual args used
 	test.ArgsUsed = args
 
 	if err := checkPlatform(test); err != nil {
-		return nil, err, StatusInvalidArguments
+		return nil, err, types.StatusInvalidArguments
 	}
 
 	//var results string
@@ -64,7 +65,7 @@ func Execute(test *AtomicTest, runSpec *RunSpec) (*AtomicTest, error, TestStatus
 		stages = []string { stage }
 	}
 
-	status := StatusUnknown
+	status := types.StatusUnknown
 	for _, stage = range stages {
 		switch stage {
 		case "cleanup":
@@ -78,7 +79,7 @@ func Execute(test *AtomicTest, runSpec *RunSpec) (*AtomicTest, error, TestStatus
 		case "prereq":
 			if len(test.Dependencies) != 0 {
 				if IsUnsupportedExecutor(test.Executor.Name) {
-					return nil, fmt.Errorf("dependency executor %s is not supported", test.DependencyExecutorName),StatusInvalidArguments
+					return nil, fmt.Errorf("dependency executor %s is not supported", test.DependencyExecutorName), types.StatusInvalidArguments
 				}
 
 				Printf("\nChecking dependencies...\n")
@@ -103,17 +104,17 @@ func Execute(test *AtomicTest, runSpec *RunSpec) (*AtomicTest, error, TestStatus
 
 						Printf("   * XX - dependency check failed: %s\n", result)
 
-						return nil, fmt.Errorf("not all dependency checks passed"), StatusPreReqFail
+						return nil, fmt.Errorf("not all dependency checks passed"), types.StatusPreReqFail
 					}
 				}
 			}
 		case "test":
 			if test.Executor == nil {
-				return nil, fmt.Errorf("test has no executor"), StatusInvalidArguments
+				return nil, fmt.Errorf("test has no executor"), types.StatusInvalidArguments
 			}
 
 			if IsUnsupportedExecutor(test.Executor.Name) {
-				return nil, fmt.Errorf("executor %s is not supported", test.Executor.Name), StatusInvalidArguments
+				return nil, fmt.Errorf("executor %s is not supported", test.Executor.Name), types.StatusInvalidArguments
 			}
 			test.StartTime = time.Now().UnixNano()
 
@@ -124,11 +125,11 @@ func Execute(test *AtomicTest, runSpec *RunSpec) (*AtomicTest, error, TestStatus
 			errstr := ""
 			if err != nil {
 				Println("****** EXECUTOR FAILED ******")
-				status = StatusTestFail
+				status = types.StatusTestFail
 				errstr = fmt.Sprint(err)
 			} else {
 				Println("****** EXECUTOR RESULTS ******")
-				status = StatusTestSuccess
+				status = types.StatusTestSuccess
 			}
 			if results != "" {
 				Println(results)
@@ -150,7 +151,7 @@ func Execute(test *AtomicTest, runSpec *RunSpec) (*AtomicTest, error, TestStatus
 
 		default:
 			Printf("Unknown stage:" + stage)
-			return nil, nil, StatusRunnerFailure
+			return nil, nil, types.StatusRunnerFailure
 		}
 	}
 	return test, nil, status
@@ -166,7 +167,7 @@ func IsUnsupportedExecutor(executorName string) bool {
 	return true
 }
 
-func GetTechnique(tid string, runSpec *RunSpec) (*Atomic, error) {
+func GetTechnique(tid string, runSpec *types.RunSpec) (*Atomic, error) {
 	if !strings.HasPrefix(tid, "T") {
 		tid = "T" + tid
 	}
@@ -199,7 +200,7 @@ func GetTechnique(tid string, runSpec *RunSpec) (*Atomic, error) {
 }
 
 
-func getTest(tid, name string, index int, runSpec *RunSpec) (*AtomicTest, error) {
+func getTest(tid, name string, index int, runSpec *types.RunSpec) (*AtomicTest, error) {
 	Printf("\nGetting Atomic Tests technique %s from %s\n", tid, runSpec.AtomicsDir)
 
 	technique, err := GetTechnique(tid, runSpec)
@@ -234,7 +235,7 @@ func getTest(tid, name string, index int, runSpec *RunSpec) (*AtomicTest, error)
 	return test, nil
 }
 
-func checkArgsAndGetDefaults(test *AtomicTest, runSpec *RunSpec) (map[string]string, error) {
+func checkArgsAndGetDefaults(test *AtomicTest, runSpec *types.RunSpec) (map[string]string, error) {
 	var (
 		updated = make(map[string]string)
 	)
@@ -315,7 +316,7 @@ func checkPlatform(test *AtomicTest) error {
 	return nil
 }
 
-func executeStage(stage, cmds, executorName, base string, args map[string]string, env []string, technique, testName string, runSpec *RunSpec) (string,error) {
+func executeStage(stage, cmds, executorName, base string, args map[string]string, env []string, technique, testName string, runSpec *types.RunSpec) (string,error) {
 	quiet := true
 
 	if stage == "test" {
@@ -397,7 +398,7 @@ func interpolateWithArgs(interpolatee, base string, args map[string]string, quie
 	return interpolated, nil
 }
 
-func executeShell(shellName string, command string, env []string, stage string, technique string, testName string, runSpec *RunSpec) (string, error) {
+func executeShell(shellName string, command string, env []string, stage string, technique string, testName string, runSpec *types.RunSpec) (string, error) {
 	 Printf("\nExecuting executor=%s command=[%s]\n", shellName, command)
 
 	f, err := os.Create(runSpec.TempDir + "/goart-" + technique + "-" + stage + "." + shellName)
@@ -450,7 +451,7 @@ func executeShell(shellName string, command string, env []string, stage string, 
 	return string(output), nil
 }
 
-func executeCMD(shellName string, command string, env []string, stage string, technique string, testName string, runSpec *RunSpec) (string, error) {
+func executeCMD(shellName string, command string, env []string, stage string, technique string, testName string, runSpec *types.RunSpec) (string, error) {
 	Printf("\nExecuting executor=%s command=[%s]\n", shellName, command)
 
 	f, err := os.Create(runSpec.TempDir + "\\goart-" + technique + "-" + stage + ".bat")
@@ -493,7 +494,7 @@ func executeCMD(shellName string, command string, env []string, stage string, te
 	return string(output), nil
 }
 
-func executePS(shellName string, command string, env []string, stage string, technique string, testName string, runSpec *RunSpec) (string, error) {
+func executePS(shellName string, command string, env []string, stage string, technique string, testName string, runSpec *types.RunSpec) (string, error) {
 	 Printf("\nExecuting executor=%s command=[%s]\n", shellName, command)
 
 	f, err := os.Create(runSpec.TempDir + "\\goart-" + technique + "-" + stage + ".ps1")
