@@ -7,6 +7,8 @@ github.com/secureworks/atomic-harness v0.0.2 h1:m1oi2JHqPESUMrcs8q2HfjUfF4MZPFM7
 github.com/secureworks/atomic-harness v0.0.2/go.mod h1:OFQb+PBwzMqh+jzg6238NAdL2omYFsy7uR9rjajvtMA=
 github.com/secureworks/atomic-harness v0.0.3 h1:/9hLNF5duKSrqweT2/ai0J7IbOrlbl8RsnhLtfm9biU=
 github.com/secureworks/atomic-harness v0.0.3/go.mod h1:OFQb+PBwzMqh+jzg6238NAdL2omYFsy7uR9rjajvtMA=
+github.com/secureworks/atomic-harness v0.0.4 h1:GlOyQ+D2fYII45a3d0rOGAwQhgFm5i+toJRkLEpr92o=
+github.com/secureworks/atomic-harness v0.0.4/go.mod h1:OFQb+PBwzMqh+jzg6238NAdL2omYFsy7uR9rjajvtMA=
 github.com/urfave/cli/v2 v2.23.7 h1:YHDQ46s3VghFHFf1DdF+Sh7H4RqhcM+t0TmZRJx4oJY=
 github.com/urfave/cli/v2 v2.23.7/go.mod h1:GHupkWPMM0M/sj1a2b4wUrWBPzazNrIjouW6fmdJLxc=
 github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 h1:bAn7/zixMGCfxrRTfdpNzjtPYqr8smhKouy9mxVdGPU=

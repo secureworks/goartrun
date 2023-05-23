@@ -10,8 +10,8 @@ import (
 	"time"
 
 	types "github.com/secureworks/atomic-harness/pkg/types"
+	utils "github.com/secureworks/atomic-harness/pkg/utils"
 
-	"gopkg.in/yaml.v3"
 )
 
 var SupportedExecutors = []string{"bash", "sh", "command_prompt", "powershell"}
@@ -168,43 +168,10 @@ func IsUnsupportedExecutor(executorName string) bool {
 	return true
 }
 
-func GetTechnique(tid string, runSpec *types.RunSpec) (*types.Atomic, error) {
-	if !strings.HasPrefix(tid, "T") {
-		tid = "T" + tid
-	}
-
-	var body []byte
-
-	if runSpec.AtomicsDir == "" {
-		return nil, fmt.Errorf("missing atomic dir")
-	}
-
-	// Check to see if test is defined locally first. If not, body will be nil
-	// and the test will be loaded below.
-	body, _ = os.ReadFile(runSpec.AtomicsDir + "/" + tid + "/" + tid + ".yaml")
-	if len(body) == 0 {
-		body, _ = os.ReadFile(runSpec.AtomicsDir + "/" + tid + "/" + tid + ".yml")
-	}
-
-	if len(body) != 0 {
-		var technique types.Atomic
-
-		if err := yaml.Unmarshal(body, &technique); err != nil {
-			return nil, fmt.Errorf("processing Atomic Test YAML file: %w", err)
-		}
-
-		technique.BaseDir = runSpec.AtomicsDir
-		return &technique, nil
-	}
-
-	return nil, fmt.Errorf("missing atomic", tid)
-}
-
-
 func getTest(tid, name string, index int, runSpec *types.RunSpec) (*types.AtomicTest, error) {
 	fmt.Printf("\nGetting Atomic Tests technique %s from %s\n", tid, runSpec.AtomicsDir)
 
-	technique, err := GetTechnique(tid, runSpec)
+	technique, err := utils.LoadAtomicsTechniqueYaml(tid, runSpec.AtomicsDir)
 	if err != nil {
 		return nil, fmt.Errorf("getting Atomic Tests technique: %w", err)
 	}
