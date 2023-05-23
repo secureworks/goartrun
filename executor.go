@@ -14,37 +14,38 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+var SupportedExecutors = []string{"bash", "sh", "command_prompt", "powershell"}
 
-func Execute(test *AtomicTest, runSpec *types.RunSpec) (*AtomicTest, error, types.TestStatus) {
+func Execute(test *types.AtomicTest, runSpec *types.RunSpec) (*types.AtomicTest, error, types.TestStatus) {
 	tid := runSpec.Technique
 	env := []string{} // TODO
 
-	Println()
+	fmt.Println()
 
-	Println("****** EXECUTION PLAN ******")
-	Println(" Technique: " + tid)
-	Println(" Test:      " + test.Name)
+	fmt.Println("****** EXECUTION PLAN ******")
+	fmt.Println(" Technique: " + tid)
+	fmt.Println(" Test:      " + test.Name)
 
 	stage := runSpec.Stage
 	if stage != "" {
-		Println(" Stage:     " + stage)
+		fmt.Println(" Stage:     " + stage)
 	}
 
 
 	if len(runSpec.Inputs) == 0 {
-		Println(" Inputs:    <none>")
+		fmt.Println(" Inputs:    <none>")
 	} else {
-		Println(" Inputs:    ", runSpec.Inputs);
+		fmt.Println(" Inputs:    ", runSpec.Inputs);
 	}
 /*
 	if env == nil {
-		Println(" Env:       <none>")
+		fmt.Println(" Env:       <none>")
 	} else {
-		Println(" Env:       " + strings.Join(env, "\n            "))
+		fmt.Println(" Env:       " + strings.Join(env, "\n            "))
 	}
 */
-	Println(" * Use at your own risk :) *")
-	Println("****************************")
+	fmt.Println(" * Use at your own risk :) *")
+	fmt.Println("****************************")
 
 	args, err := checkArgsAndGetDefaults(test, runSpec)
 	if err != nil {
@@ -71,7 +72,7 @@ func Execute(test *AtomicTest, runSpec *types.RunSpec) (*AtomicTest, error, type
 		case "cleanup":
 			_, err = executeStage(stage, test.Executor.CleanupCommand, test.Executor.Name, test.BaseDir, args , env , tid, test.Name, runSpec)
 			if err != nil {
-				Println("WARNING. Cleanup command failed", err)
+				fmt.Println("WARNING. Cleanup command failed", err)
 			} else {
 				test.IsCleanedUp = true
 			}
@@ -82,16 +83,16 @@ func Execute(test *AtomicTest, runSpec *types.RunSpec) (*AtomicTest, error, type
 					return nil, fmt.Errorf("dependency executor %s is not supported", test.DependencyExecutorName), types.StatusInvalidArguments
 				}
 
-				Printf("\nChecking dependencies...\n")
+				fmt.Printf("\nChecking dependencies...\n")
 
 				for i, dep := range test.Dependencies {
-					Printf("  - %s", dep.Description)
+					fmt.Printf("  - %s", dep.Description)
 
 					_, err := executeStage(fmt.Sprintf("checkPrereq%d",i), dep.PrereqCommand, test.DependencyExecutorName, test.BaseDir, args , env , tid, test.Name, runSpec)
 
 
 					if err == nil {
-						Printf("   * OK - dependency check succeeded!\n")
+						fmt.Printf("   * OK - dependency check succeeded!\n")
 						continue
 					}
 
@@ -102,7 +103,7 @@ func Execute(test *AtomicTest, runSpec *types.RunSpec) (*AtomicTest, error, type
 							result = "no details provided"
 						}
 
-						Printf("   * XX - dependency check failed: %s\n", result)
+						fmt.Printf("   * XX - dependency check failed: %s\n", result)
 
 						return nil, fmt.Errorf("not all dependency checks passed"), types.StatusPreReqFail
 					}
@@ -124,16 +125,16 @@ func Execute(test *AtomicTest, runSpec *types.RunSpec) (*AtomicTest, error, type
 
 			errstr := ""
 			if err != nil {
-				Println("****** EXECUTOR FAILED ******")
+				fmt.Println("****** EXECUTOR FAILED ******")
 				status = types.StatusTestFail
 				errstr = fmt.Sprint(err)
 			} else {
-				Println("****** EXECUTOR RESULTS ******")
+				fmt.Println("****** EXECUTOR RESULTS ******")
 				status = types.StatusTestSuccess
 			}
 			if results != "" {
-				Println(results)
-				Println("******************************")
+				fmt.Println(results)
+				fmt.Println("******************************")
 			}
 
 			// save state
@@ -150,7 +151,7 @@ func Execute(test *AtomicTest, runSpec *types.RunSpec) (*AtomicTest, error, type
 			}
 
 		default:
-			Printf("Unknown stage:" + stage)
+			fmt.Printf("Unknown stage:" + stage)
 			return nil, nil, types.StatusRunnerFailure
 		}
 	}
@@ -167,7 +168,7 @@ func IsUnsupportedExecutor(executorName string) bool {
 	return true
 }
 
-func GetTechnique(tid string, runSpec *types.RunSpec) (*Atomic, error) {
+func GetTechnique(tid string, runSpec *types.RunSpec) (*types.Atomic, error) {
 	if !strings.HasPrefix(tid, "T") {
 		tid = "T" + tid
 	}
@@ -186,7 +187,7 @@ func GetTechnique(tid string, runSpec *types.RunSpec) (*Atomic, error) {
 	}
 
 	if len(body) != 0 {
-		var technique Atomic
+		var technique types.Atomic
 
 		if err := yaml.Unmarshal(body, &technique); err != nil {
 			return nil, fmt.Errorf("processing Atomic Test YAML file: %w", err)
@@ -200,17 +201,17 @@ func GetTechnique(tid string, runSpec *types.RunSpec) (*Atomic, error) {
 }
 
 
-func getTest(tid, name string, index int, runSpec *types.RunSpec) (*AtomicTest, error) {
-	Printf("\nGetting Atomic Tests technique %s from %s\n", tid, runSpec.AtomicsDir)
+func getTest(tid, name string, index int, runSpec *types.RunSpec) (*types.AtomicTest, error) {
+	fmt.Printf("\nGetting Atomic Tests technique %s from %s\n", tid, runSpec.AtomicsDir)
 
 	technique, err := GetTechnique(tid, runSpec)
 	if err != nil {
 		return nil, fmt.Errorf("getting Atomic Tests technique: %w", err)
 	}
 
-	Printf("  - technique has %d tests\n", len(technique.AtomicTests))
+	fmt.Printf("  - technique has %d tests\n", len(technique.AtomicTests))
 
-	var test *AtomicTest
+	var test *types.AtomicTest
 
 	if index >= 0 && index < len(technique.AtomicTests) {
 		test = &technique.AtomicTests[index]
@@ -230,12 +231,12 @@ func getTest(tid, name string, index int, runSpec *types.RunSpec) (*AtomicTest, 
 	test.BaseDir = technique.BaseDir
 	test.TempDir = runSpec.TempDir
 
-	Printf("  - found test named %s\n", test.Name)
+	fmt.Printf("  - found test named %s\n", test.Name)
 
 	return test, nil
 }
 
-func checkArgsAndGetDefaults(test *AtomicTest, runSpec *types.RunSpec) (map[string]string, error) {
+func checkArgsAndGetDefaults(test *types.AtomicTest, runSpec *types.RunSpec) (map[string]string, error) {
 	var (
 		updated = make(map[string]string)
 	)
@@ -249,28 +250,28 @@ func checkArgsAndGetDefaults(test *AtomicTest, runSpec *types.RunSpec) (map[stri
 		keys = append(keys, k)
 	}
 
-	Println("\nChecking arguments...")
+	fmt.Println("\nChecking arguments...")
 
 	if len(keys) > 0 {
-		Println("  - supplied in config/flags: " + strings.Join(keys, ", "))
+		fmt.Println("  - supplied in config/flags: " + strings.Join(keys, ", "))
 	}
 
 	for k, v := range test.InputArugments {
-		Println("  - checking for argument " + k)
+		fmt.Println("  - checking for argument " + k)
 
 		val, ok := runSpec.Inputs[k] //args[k]
 
 		if ok {
-			Println("   * OK - found argument in supplied args")
+			fmt.Println("   * OK - found argument in supplied args")
 		} else {
-			Println("   * XX - not found, trying default arg")
+			fmt.Println("   * XX - not found, trying default arg")
 
 			val = v.Default
 
 			if val == "" {
 				return nil, fmt.Errorf("argument [%s] is required but not set and has no default", k)
 			} else {
-				Println("   * OK - found argument in defaults")
+				fmt.Println("   * OK - found argument in defaults")
 			}
 		}
 
@@ -280,7 +281,7 @@ func checkArgsAndGetDefaults(test *AtomicTest, runSpec *types.RunSpec) (map[stri
 	return updated, nil
 }
 
-func checkPlatform(test *AtomicTest) error {
+func checkPlatform(test *types.AtomicTest) error {
 	var platform string
 
 	switch runtime.GOOS {
@@ -296,7 +297,7 @@ func checkPlatform(test *AtomicTest) error {
 		return fmt.Errorf("unable to detect our platform")
 	}
 
-	Printf("\nChecking platform vs our platform (%s)...\n", platform)
+	fmt.Printf("\nChecking platform vs our platform (%s)...\n", platform)
 
 	var found bool
 
@@ -308,7 +309,7 @@ func checkPlatform(test *AtomicTest) error {
 	}
 
 	if found {
-		Println("  - OK - our platform is supported!")
+		fmt.Println("  - OK - our platform is supported!")
 	} else {
 		return fmt.Errorf("unable to run test that supports platforms %v because we are on %s", test.SupportedPlatforms, platform)
 	}
@@ -324,13 +325,13 @@ func executeStage(stage, cmds, executorName, base string, args map[string]string
 	}
 
 	if cmds == "" {
-		Println("Test does not have " + stage + " stage defined")
+		fmt.Println("Test does not have " + stage + " stage defined")
 		return "", nil
 	}
 
 	command, err := interpolateWithArgs(cmds, base, args, quiet)
 	if err != nil {
-		Println("    * FAIL - " + stage + " failed", err)
+		fmt.Println("    * FAIL - " + stage + " failed", err)
 		return "", err
 	}
 
@@ -354,10 +355,10 @@ func executeStage(stage, cmds, executorName, base string, args map[string]string
 	}
 
 	if err != nil {
-		Printf("   * FAIL - " + stage + " failed!\n", err)
+		fmt.Printf("   * FAIL - " + stage + " failed!\n", err)
 		return results, err
 	}
-	Printf("   * OK - " + stage + " succeeded!\n")
+	fmt.Printf("   * OK - " + stage + " succeeded!\n")
 	return results, nil
 }
 
@@ -373,18 +374,14 @@ func interpolateWithArgs(interpolatee, base string, args map[string]string, quie
 		return interpolated, nil
 	}
 
-	// is this Quiet business doing anything anymore?
-	prevQuiet := Quiet
-	Quiet = quiet
-
-	defer func() {
-		Quiet = prevQuiet
-	}()
-
-	Println("\nInterpolating command with input arguments...")
+	if !quiet {
+		fmt.Println("\nInterpolating command with input arguments...")
+	}
 
 	for k, v := range args {
-		Printf("  - interpolating [#{%s}] => [%s]\n", k, v)
+		if !quiet {
+			fmt.Printf("  - interpolating [#{%s}] => [%s]\n", k, v)
+		}
 
 		if AtomicsFolderRegex.MatchString(v) {
 			v = AtomicsFolderRegex.ReplaceAllString(v, "")
@@ -399,7 +396,7 @@ func interpolateWithArgs(interpolatee, base string, args map[string]string, quie
 }
 
 func executeShell(shellName string, command string, env []string, stage string, technique string, testName string, runSpec *types.RunSpec) (string, error) {
-	 Printf("\nExecuting executor=%s command=[%s]\n", shellName, command)
+	 fmt.Printf("\nExecuting executor=%s command=[%s]\n", shellName, command)
 
 	f, err := os.Create(runSpec.TempDir + "/goart-" + technique + "-" + stage + "." + shellName)
 
@@ -452,7 +449,7 @@ func executeShell(shellName string, command string, env []string, stage string, 
 }
 
 func executeCMD(shellName string, command string, env []string, stage string, technique string, testName string, runSpec *types.RunSpec) (string, error) {
-	Printf("\nExecuting executor=%s command=[%s]\n", shellName, command)
+	fmt.Printf("\nExecuting executor=%s command=[%s]\n", shellName, command)
 
 	f, err := os.Create(runSpec.TempDir + "\\goart-" + technique + "-" + stage + ".bat")
 
@@ -495,7 +492,7 @@ func executeCMD(shellName string, command string, env []string, stage string, te
 }
 
 func executePS(shellName string, command string, env []string, stage string, technique string, testName string, runSpec *types.RunSpec) (string, error) {
-	 Printf("\nExecuting executor=%s command=[%s]\n", shellName, command)
+	 fmt.Printf("\nExecuting executor=%s command=[%s]\n", shellName, command)
 
 	f, err := os.Create(runSpec.TempDir + "\\goart-" + technique + "-" + stage + ".ps1")
 	

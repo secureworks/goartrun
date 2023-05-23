@@ -171,6 +171,6 @@ func main() {
 		}
 	}
 
-	Println("done")
+	fmt.Println("done")
 	os.Exit(int(status))
 }

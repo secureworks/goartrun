@@ -12,7 +12,7 @@ import (
 	types "github.com/secureworks/atomic-harness/pkg/types"
 )
 
-func ManagePrivilege(atomicTest *AtomicTest, runSpec *types.RunSpec) {
+func ManagePrivilege(atomicTest *types.AtomicTest, runSpec *types.RunSpec) {
 	usr,err := user.Current()
 	if err != nil {
 		fmt.Println("ERROR: unable to determine current user", err)
