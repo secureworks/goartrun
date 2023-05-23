@@ -1,6 +1,6 @@
 # goartrun
 
-# ARCHIVED - moved into [https://github.com/secureworks/atomic-harness](atomic-harness) repo
+# ARCHIVED - moved into https://github.com/secureworks/atomic-harness repo
 
 ## Goals
 
